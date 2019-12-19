@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Passport\Bridge\BearerTokenWithScopeResponse;
 use Laravel\Passport\Bridge\PasswordGrant;
 use Laravel\Passport\Bridge\PersonalAccessGrant;
 use Laravel\Passport\Bridge\RefreshTokenRepository;
@@ -212,24 +213,7 @@ class PassportServiceProvider extends ServiceProvider
             $this->app->make(Bridge\ScopeRepository::class),
             $this->makeCryptKey('private'),
             app('encrypter')->getKey(),
-            new class() extends BearerTokenResponse
-            {
-                /**
-                 * Add custom fields to your Bearer Token response here, then override
-                 * AuthorizationServer::getResponseType() to pull in your version of
-                 * this class rather than the default.
-                 *
-                 * @param AccessTokenEntityInterface $accessToken
-                 *
-                 * @return array
-                 */
-                protected function getExtraParams(AccessTokenEntityInterface $accessToken)
-                {
-                    return ['scopes' => collect($accessToken->getScopes())->map(function (ScopeEntityInterface $scopeEntity) {
-                        return $scopeEntity->getIdentifier();
-                    })->implode(' ')];
-                }
-            }
+            new BearerTokenWithScopeResponse()
         );
     }
 
