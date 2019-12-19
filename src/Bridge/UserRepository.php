@@ -2,6 +2,7 @@
 
 namespace Laravel\Passport\Bridge;
 
+use Illuminate\Contracts\Hashing\Hasher;
 use Illuminate\Hashing\HashManager;
 use League\OAuth2\Server\Entities\ClientEntityInterface;
 use League\OAuth2\Server\Repositories\UserRepositoryInterface;
@@ -54,6 +55,6 @@ class UserRepository implements UserRepositoryInterface
             return;
         }
 
-        return new User($user->getAuthIdentifier());
+        return new User($user);
     }
 }

@@ -9,14 +9,21 @@ class User implements UserEntityInterface
 {
     use EntityTrait;
 
+    protected $user;
+
     /**
      * Create a new user instance.
      *
-     * @param  string|int  $identifier
+     * @param $userModel
      * @return void
      */
-    public function __construct($identifier)
+    public function __construct($userModel)
     {
-        $this->setIdentifier($identifier);
+        $this->user = $userModel;
+        $this->setIdentifier($userModel->getAuthIdentifier());
+    }
+
+    public function user() {
+        return $this->user;
     }
 }

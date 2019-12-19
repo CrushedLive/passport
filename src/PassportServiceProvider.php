@@ -11,17 +11,20 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\ServiceProvider;
+use Laravel\Passport\Bridge\PasswordGrant;
 use Laravel\Passport\Bridge\PersonalAccessGrant;
 use Laravel\Passport\Bridge\RefreshTokenRepository;
 use Laravel\Passport\Guards\TokenGuard;
 use League\OAuth2\Server\AuthorizationServer;
 use League\OAuth2\Server\CryptKey;
+use League\OAuth2\Server\Entities\AccessTokenEntityInterface;
+use League\OAuth2\Server\Entities\ScopeEntityInterface;
 use League\OAuth2\Server\Grant\AuthCodeGrant;
 use League\OAuth2\Server\Grant\ClientCredentialsGrant;
 use League\OAuth2\Server\Grant\ImplicitGrant;
-use League\OAuth2\Server\Grant\PasswordGrant;
 use League\OAuth2\Server\Grant\RefreshTokenGrant;
 use League\OAuth2\Server\ResourceServer;
+use League\OAuth2\Server\ResponseTypes\BearerTokenResponse;
 
 class PassportServiceProvider extends ServiceProvider
 {
@@ -32,7 +35,7 @@ class PassportServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->loadViewsFrom(__DIR__.'/../resources/views', 'passport');
+        $this->loadViewsFrom(__DIR__ . '/../resources/views', 'passport');
 
         $this->deleteCookieOnLogout();
 
@@ -40,15 +43,15 @@ class PassportServiceProvider extends ServiceProvider
             $this->registerMigrations();
 
             $this->publishes([
-                __DIR__.'/../database/migrations' => database_path('migrations'),
+                __DIR__ . '/../database/migrations' => database_path('migrations'),
             ], 'passport-migrations');
 
             $this->publishes([
-                __DIR__.'/../resources/views' => base_path('resources/views/vendor/passport'),
+                __DIR__ . '/../resources/views' => base_path('resources/views/vendor/passport'),
             ], 'passport-views');
 
             $this->publishes([
-                __DIR__.'/../resources/js/components' => base_path('resources/js/components/passport'),
+                __DIR__ . '/../resources/js/components' => base_path('resources/js/components/passport'),
             ], 'passport-components');
 
             $this->commands([
@@ -67,7 +70,7 @@ class PassportServiceProvider extends ServiceProvider
     protected function registerMigrations()
     {
         if (Passport::$runsMigrations) {
-            return $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+            return $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
         }
     }
 
@@ -78,8 +81,8 @@ class PassportServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        if (! $this->app->configurationIsCached()) {
-            $this->mergeConfigFrom(__DIR__.'/../config/passport.php', 'passport');
+        if (!$this->app->configurationIsCached()) {
+            $this->mergeConfigFrom(__DIR__ . '/../config/passport.php', 'passport');
         }
 
         $this->registerAuthorizationServer();
@@ -171,7 +174,8 @@ class PassportServiceProvider extends ServiceProvider
     /**
      * Create and configure a Password grant instance.
      *
-     * @return \League\OAuth2\Server\Grant\PasswordGrant
+     * @return PasswordGrant
+     * @throws \Illuminate\Contracts\Container\BindingResolutionException
      */
     protected function makePasswordGrant()
     {
@@ -207,7 +211,25 @@ class PassportServiceProvider extends ServiceProvider
             $this->app->make(Bridge\AccessTokenRepository::class),
             $this->app->make(Bridge\ScopeRepository::class),
             $this->makeCryptKey('private'),
-            app('encrypter')->getKey()
+            app('encrypter')->getKey(),
+            new class() extends BearerTokenResponse
+            {
+                /**
+                 * Add custom fields to your Bearer Token response here, then override
+                 * AuthorizationServer::getResponseType() to pull in your version of
+                 * this class rather than the default.
+                 *
+                 * @param AccessTokenEntityInterface $accessToken
+                 *
+                 * @return array
+                 */
+                protected function getExtraParams(AccessTokenEntityInterface $accessToken)
+                {
+                    return ['scopes' => collect($accessToken->getScopes())->map(function (ScopeEntityInterface $scopeEntity) {
+                        return $scopeEntity->getIdentifier();
+                    })->implode(' ')];
+                }
+            }
         );
     }
 
@@ -229,15 +251,15 @@ class PassportServiceProvider extends ServiceProvider
     /**
      * Create a CryptKey instance without permissions check.
      *
-     * @param  string  $key
+     * @param string $key
      * @return \League\OAuth2\Server\CryptKey
      */
     protected function makeCryptKey($type)
     {
-        $key = str_replace('\\n', "\n", $this->app->make(Config::class)->get('passport.'.$type.'_key'));
+        $key = str_replace('\\n', "\n", $this->app->make(Config::class)->get('passport.' . $type . '_key'));
 
-        if (! $key) {
-            $key = 'file://'.Passport::keyPath('oauth-'.$type.'.key');
+        if (!$key) {
+            $key = 'file://' . Passport::keyPath('oauth-' . $type . '.key');
         }
 
         return new CryptKey($key, null, false);
@@ -262,7 +284,7 @@ class PassportServiceProvider extends ServiceProvider
     /**
      * Make an instance of the token guard.
      *
-     * @param  array  $config
+     * @param array $config
      * @return \Illuminate\Auth\RequestGuard
      */
     protected function makeGuard(array $config)
@@ -301,7 +323,7 @@ class PassportServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__.'/../config/passport.php' => config_path('passport.php'),
+                __DIR__ . '/../config/passport.php' => config_path('passport.php'),
             ], 'passport-config');
         }
     }

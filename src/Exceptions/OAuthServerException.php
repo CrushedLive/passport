@@ -39,4 +39,19 @@ class OAuthServerException extends Exception
     {
         return $this->response;
     }
+
+    /**
+     * Invalid scope error.
+     *
+     * @param null|string $redirectUri A HTTP URI to redirect the user back to
+     *
+     * @return \League\OAuth2\Server\Exception\OAuthServerException
+     */
+    public static function scopeDenied()
+    {
+        $errorMessage = 'The requested scope is not available to this grant';
+        $hint = 'Please check and apply the appropriate scopes to the grant';
+
+        return new static($errorMessage, 5, 'invalid_scope', 400, $hint);
+    }
 }
