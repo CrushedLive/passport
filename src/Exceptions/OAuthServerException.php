@@ -52,6 +52,6 @@ class OAuthServerException extends Exception
         $errorMessage = 'The requested scope is not available to this grant';
         $hint = 'Please check and apply the appropriate scopes to the grant';
 
-        return new static($errorMessage, 5, 'invalid_scope', 400, $hint);
+        return new LeagueException($errorMessage, 5, 'invalid_scope', 400, $hint);
     }
 }

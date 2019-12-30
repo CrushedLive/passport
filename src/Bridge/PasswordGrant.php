@@ -11,6 +11,8 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class PasswordGrant extends PasswordGrantBase
 {
+    use ValidateUsersScopes;
+
     /**
      * {@inheritdoc}
      */
@@ -25,8 +27,8 @@ class PasswordGrant extends PasswordGrantBase
         $user = $this->validateUser($request, $client);
         $scopes = $this->validateScopes($this->getRequestParameter('scope', $request, $this->defaultScope));
 
-        if (!($allowedScopes = $this->allowedUserScopes($user, $scopes))) {
-            OAuthServerException::scopeDenied();
+        if (!($allowedScopes = $this->validateUserScopes($user, $scopes))) {
+            throw OAuthServerException::scopeDenied();
         }
 
         // Finalize the requested scopes
@@ -46,28 +48,5 @@ class PasswordGrant extends PasswordGrantBase
         }
 
         return $responseType;
-    }
-
-    /**
-     *
-     *
-     * @param User $user
-     * @param $scopes
-     */
-    protected function allowedUserScopes($user, $scopes)
-    {
-        $availableScopes = $user->user()->availableScopes();
-
-        if ($availableScopes === true) {
-            return $scopes;
-        } else {
-            $scopes = collect($scopes);
-            if ($scopes->count() == 1 && $scopes->first()->getIdentifier() == '*') {
-                return collect(Passport::scopes())->whereIn('id', $availableScopes)->pluck('id')
-                    ->mapInto(\Laravel\Passport\Bridge\Scope::class)->toArray();
-            }
-            $blocked = $scopes->whereNotIn('getIdentifier', $availableScopes);
-            return $blocked->isEmpty() ? $scopes->whereIn('getIdentifier', $availableScopes)->toArray() : null;
-        }
     }
 }

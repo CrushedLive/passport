@@ -20,12 +20,17 @@ class UserRepository implements UserRepositoryInterface
     /**
      * Create a new repository instance.
      *
-     * @param  \Illuminate\Hashing\HashManager  $hasher
+     * @param \Illuminate\Hashing\HashManager $hasher
      * @return void
      */
     public function __construct(HashManager $hasher)
     {
         $this->hasher = $hasher->driver();
+    }
+
+    public function getUserModel()
+    {
+
     }
 
     /**
@@ -35,7 +40,7 @@ class UserRepository implements UserRepositoryInterface
     {
         $provider = config('auth.guards.api.provider');
 
-        if (is_null($model = config('auth.providers.'.$provider.'.model'))) {
+        if (is_null($model = config('auth.providers.' . $provider . '.model'))) {
             throw new RuntimeException('Unable to determine authentication model from configuration.');
         }
 
@@ -45,13 +50,37 @@ class UserRepository implements UserRepositoryInterface
             $user = (new $model)->where('email', $username)->first();
         }
 
-        if (! $user) {
+        if (!$user) {
             return;
         } elseif (method_exists($user, 'validateForPassportPasswordGrant')) {
-            if (! $user->validateForPassportPasswordGrant($password)) {
+            if (!$user->validateForPassportPasswordGrant($password)) {
                 return;
             }
-        } elseif (! $this->hasher->check($password, $user->getAuthPassword())) {
+        } elseif (!$this->hasher->check($password, $user->getAuthPassword())) {
+            return;
+        }
+
+        return new User($user);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getUserEntityById($id, $grantType, ClientEntityInterface $clientEntity)
+    {
+        $provider = config('auth.guards.api.provider');
+
+        if (is_null($model = config('auth.providers.' . $provider . '.model'))) {
+            throw new RuntimeException('Unable to determine authentication model from configuration.');
+        }
+
+        if (method_exists($model, 'getForPassport')) {
+            $user = $model::getForPassport($id);
+        } else {
+            $user = $model::findOrFail($id);
+        }
+
+        if (!$user) {
             return;
         }
 

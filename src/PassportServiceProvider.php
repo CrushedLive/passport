@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Bridge\BearerTokenWithScopeResponse;
+use Laravel\Passport\Bridge\EnhanceGrant;
 use Laravel\Passport\Bridge\PasswordGrant;
 use Laravel\Passport\Bridge\PersonalAccessGrant;
 use Laravel\Passport\Bridge\RefreshTokenRepository;
@@ -112,6 +113,10 @@ class PassportServiceProvider extends ServiceProvider
                 );
 
                 $server->enableGrantType(
+                    $this->makeEnhanceGrant(), Passport::tokensExpireIn()
+                );
+
+                $server->enableGrantType(
                     $this->makePasswordGrant(), Passport::tokensExpireIn()
                 );
 
@@ -168,6 +173,22 @@ class PassportServiceProvider extends ServiceProvider
         $repository = $this->app->make(RefreshTokenRepository::class);
 
         return tap(new RefreshTokenGrant($repository), function ($grant) {
+            $grant->setRefreshTokenTTL(Passport::refreshTokensExpireIn());
+        });
+    }
+
+    /**
+     * Create and configure a Refresh Token grant instance.
+     *
+     * @return \League\OAuth2\Server\Grant\RefreshTokenGrant
+     */
+    protected function makeEnhanceGrant()
+    {
+
+        return tap(new EnhanceGrant(
+            $this->app->make(RefreshTokenRepository::class),
+            $this->app->make(Bridge\UserRepository::class),
+        ), function ($grant) {
             $grant->setRefreshTokenTTL(Passport::refreshTokensExpireIn());
         });
     }
