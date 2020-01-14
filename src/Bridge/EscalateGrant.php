@@ -13,7 +13,7 @@ use League\OAuth2\Server\RequestEvent;
 use League\OAuth2\Server\ResponseTypes\ResponseTypeInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-class EnhanceGrant extends RefreshTokenGrant
+class EscalateGrant extends RefreshTokenGrant
 {
     use ValidateUsersScopes;
 
@@ -99,6 +99,6 @@ class EnhanceGrant extends RefreshTokenGrant
      */
     public function getIdentifier()
     {
-        return 'enhance';
+        return 'escalate';
     }
 }

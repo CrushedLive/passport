@@ -18,7 +18,7 @@ class BearerTokenWithScopeResponse extends \League\OAuth2\Server\ResponseTypes\B
      */
     protected function getExtraParams(AccessTokenEntityInterface $accessToken)
     {
-        return ['scopes' => collect($accessToken->getScopes())->map(function (ScopeEntityInterface $scopeEntity) {
+        return ['scope' => collect($accessToken->getScopes())->map(function (ScopeEntityInterface $scopeEntity) {
             return $scopeEntity->getIdentifier();
         })->implode(' ')];
     }

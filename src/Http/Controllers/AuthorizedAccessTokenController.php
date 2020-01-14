@@ -18,7 +18,7 @@ class AuthorizedAccessTokenController
     /**
      * Create a new controller instance.
      *
-     * @param  \Laravel\Passport\TokenRepository  $tokenRepository
+     * @param \Laravel\Passport\TokenRepository $tokenRepository
      * @return void
      */
     public function __construct(TokenRepository $tokenRepository)
@@ -29,7 +29,7 @@ class AuthorizedAccessTokenController
     /**
      * Get all of the authorized tokens for the authenticated user.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Database\Eloquent\Collection
      */
     public function forUser(Request $request)
@@ -37,15 +37,15 @@ class AuthorizedAccessTokenController
         $tokens = $this->tokenRepository->forUser($request->user()->getAuthIdentifier());
 
         return $tokens->load('client')->filter(function ($token) {
-            return ! $token->client->firstParty() && ! $token->revoked;
+            return !$token->client->firstParty() && !$token->revoked;
         })->values();
     }
 
     /**
      * Delete the given token.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  string  $tokenId
+     * @param \Illuminate\Http\Request $request
+     * @param string $tokenId
      * @return \Illuminate\Http\Response
      */
     public function destroy(Request $request, $tokenId)
@@ -60,6 +60,12 @@ class AuthorizedAccessTokenController
 
         $token->revoke();
 
+        return new Response('', Response::HTTP_NO_CONTENT);
+    }
+
+    public function revoke(Request $request)
+    {
+        $request->user()->token()->revoke();
         return new Response('', Response::HTTP_NO_CONTENT);
     }
 }

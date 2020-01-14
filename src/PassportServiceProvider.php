@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Request;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Bridge\BearerTokenWithScopeResponse;
-use Laravel\Passport\Bridge\EnhanceGrant;
+use Laravel\Passport\Bridge\EscalateGrant;
 use Laravel\Passport\Bridge\PasswordGrant;
 use Laravel\Passport\Bridge\PersonalAccessGrant;
 use Laravel\Passport\Bridge\RefreshTokenRepository;
@@ -113,7 +113,7 @@ class PassportServiceProvider extends ServiceProvider
                 );
 
                 $server->enableGrantType(
-                    $this->makeEnhanceGrant(), Passport::tokensExpireIn()
+                    $this->makeEscalateGrant(), Passport::tokensExpireIn()
                 );
 
                 $server->enableGrantType(
@@ -182,10 +182,10 @@ class PassportServiceProvider extends ServiceProvider
      *
      * @return \League\OAuth2\Server\Grant\RefreshTokenGrant
      */
-    protected function makeEnhanceGrant()
+    protected function makeEscalateGrant()
     {
 
-        return tap(new EnhanceGrant(
+        return tap(new EscalateGrant(
             $this->app->make(RefreshTokenRepository::class),
             $this->app->make(Bridge\UserRepository::class),
         ), function ($grant) {

@@ -16,7 +16,7 @@ class RouteRegistrar
     /**
      * Create a new route registrar instance.
      *
-     * @param  \Illuminate\Contracts\Routing\Registrar  $router
+     * @param \Illuminate\Contracts\Routing\Registrar $router
      * @return void
      */
     public function __construct(Router $router)
@@ -74,6 +74,12 @@ class RouteRegistrar
             'uses' => 'AccessTokenController@issueToken',
             'as' => 'passport.token',
             'middleware' => 'throttle',
+        ]);
+
+        $this->router->delete('/token', [
+            'uses' => 'AuthorizedAccessTokenController@revoke',
+            'as' => 'passport.token.revoke',
+            'middleware' => ['api', 'auth:api'],
         ]);
 
         $this->router->group(['middleware' => ['web', 'auth']], function ($router) {
